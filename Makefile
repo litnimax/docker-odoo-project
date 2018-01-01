@@ -14,10 +14,11 @@ all: build
 build:
 	$(eval TMP := $(shell mktemp -u))
 	cp -r $(VERSION) $(TMP)
-	cp -r bin/ $(TMP)
-	cp -r start-entrypoint.d/ $(TMP)
-	cp -r before-migrate-entrypoint.d/ $(TMP)
-	docker build --no-cache -t $(IMAGE_LATEST) $(TMP)
+	cp -r bin $(TMP)
+	cp -r start-entrypoint.d $(TMP)
+	cp -r before-migrate-entrypoint.d $(TMP)
+	ls $(TMP)
+	docker build  -t $(IMAGE_LATEST) $(TMP)
 	rm -rf $(TMP)
 
 
@@ -46,10 +47,12 @@ test:
 	$(eval TMP := $(shell mktemp -u))
 	cp -r example $(TMP)
 	rm -rf $(TMP)/odoo/src
-	wget -nv -O /tmp/odoo.tar.gz $(ODOO_URL)
-	tar xfz /tmp/odoo.tar.gz -C $(TMP)/odoo/
+	#curl -L -o /tmp/odoo.tar.gz $(ODOO_URL)
+	#tar xfz /tmp/odoo.tar.gz -C $(TMP)/odoo/
+	tar xfz odoo.tar.gz -C $(TMP)/odoo/
 	mv $(TMP)/odoo/odoo-$(VERSION) $(TMP)/odoo/src
-	sed 's|FROM .*|FROM $(IMAGE_LATEST)|' -i $(TMP)/odoo/Dockerfile
+	# sed 's|FROM .*|FROM $(IMAGE_LATEST)|' -i $(TMP)/odoo/Dockerfile # ? Linux version?
+	sed -i orig 's|FROM .*|FROM $(IMAGE_LATEST)|' $(TMP)/odoo/Dockerfile # Mac version
 	cat $(TMP)/odoo/Dockerfile
 	cd $(TMP) && docker-compose run --rm -e LOCAL_USER_ID=$(shell id -u) odoo odoo --stop-after-init
 	cd $(TMP) && docker-compose run --rm -e LOCAL_USER_ID=$(shell id -u) odoo runtests
